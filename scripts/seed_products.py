@@ -18,7 +18,8 @@ CANONICAL_STORE = "701"
 
 def fetch_latest_prices():
     latest = {}
-    with urllib.request.urlopen(CSV_URL) as resp:
+    req = urllib.request.Request(CSV_URL, headers={"User-Agent": "curl/8.0"})
+    with urllib.request.urlopen(req) as resp:
         reader = csv.DictReader(line.decode("utf-8") for line in resp)
         for row in reader:
             if row["store_code"] != CANONICAL_STORE:
