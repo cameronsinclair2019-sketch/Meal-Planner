@@ -58,6 +58,7 @@ export default function NewRecipePage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to create recipe");
+      if (json.warning) alert(json.warning);
       router.push(`/recipes/${json.id}`);
     } catch (err) {
       setError((err as Error).message);

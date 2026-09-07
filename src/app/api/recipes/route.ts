@@ -129,20 +129,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: recipeError.message }, { status: 500 });
   }
 
+  const skipped: string[] = [];
+
   try {
     for (const line of body.ingredients) {
-      if (!line.name?.trim() || !line.qty || !line.unit?.trim()) continue;
+      if (!line.name?.trim() || line.qty == null || Number.isNaN(Number(line.qty))) {
+        skipped.push(line.name ?? "(unnamed)");
+        continue;
+      }
       const ingredientId = await resolveIngredientId(admin, line.name);
       const { error: lineError } = await admin.from("recipe_ingredients").insert({
         recipe_id: recipe.id,
         ingredient_id: ingredientId,
         qty: line.qty,
-        unit: line.unit.trim(),
+        unit: line.unit?.trim() ?? "",
       });
       if (lineError) throw new Error(lineError.message);
     }
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+  }
+
+  if (skipped.length > 0) {
+    return NextResponse.json(
+      {
+        id: recipe.id,
+        warning: `Skipped ${skipped.length} ingredient(s) missing a name or quantity: ${skipped.join(", ")}`,
+      },
+      { status: 201 }
+    );
   }
 
   return NextResponse.json({ id: recipe.id });
