@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
 
-  let query = supabase
+  let query = getSupabase()
     .from("products")
     .select("sku, name, price, package_size, category, last_updated")
     .order("name", { ascending: true })
