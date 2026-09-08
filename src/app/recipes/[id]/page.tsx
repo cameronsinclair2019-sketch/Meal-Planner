@@ -212,6 +212,12 @@ export default function RecipeDetailPage({
     load();
   }, [load]);
 
+  async function removeIngredient(lineId: string) {
+    if (!confirm("Remove this ingredient from the recipe?")) return;
+    await fetch(`/api/recipes/${id}/ingredients/${lineId}`, { method: "DELETE" });
+    load();
+  }
+
   if (error) return <p className="mx-auto max-w-2xl px-4 py-8 text-red-600 text-sm">{error}</p>;
   if (!data) return <p className="mx-auto max-w-2xl px-4 py-8 text-neutral-500 text-sm">Loading...</p>;
 
@@ -250,9 +256,18 @@ export default function RecipeDetailPage({
       <ul className="mt-4 divide-y divide-neutral-200">
         {data.ingredients.map((line) => (
           <li key={line.id} className="py-3">
-            <p className="text-sm">
-              {line.qty} {line.unit} {line.name}
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm">
+                {line.qty} {line.unit} {line.name}
+              </p>
+              <button
+                type="button"
+                onClick={() => removeIngredient(line.id)}
+                className="text-xs text-neutral-400 hover:text-red-600 shrink-0"
+              >
+                Remove
+              </button>
+            </div>
             {line.mapping ? (
               <p className="text-xs text-neutral-500 mt-0.5">
                 → {line.mapping.product_name} (${line.mapping.price.toFixed(2)}, 1 package ={" "}
