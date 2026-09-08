@@ -17,6 +17,9 @@ function IngredientMapper({
   const [yieldUnit, setYieldUnit] = useState(line.unit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
+  const [manualName, setManualName] = useState(line.name);
+  const [manualPrice, setManualPrice] = useState("");
 
   const search = useCallback((q: string) => {
     if (!q.trim()) {
@@ -51,6 +54,27 @@ function IngredientMapper({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to save mapping");
       onMapped();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addManualProduct() {
+    if (!manualName.trim() || !manualPrice.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/products/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: manualName, price: Number(manualPrice) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to add product");
+      setSelected({ sku: json.sku, name: json.name, price: json.price });
+      setShowManual(false);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -118,6 +142,44 @@ function IngredientMapper({
             className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
           >
             {saving ? "Saving..." : "Confirm mapping"}
+          </button>
+        </div>
+      )}
+
+      {!showManual ? (
+        <button
+          type="button"
+          onClick={() => setShowManual(true)}
+          className="mt-2 text-xs text-neutral-500 hover:underline"
+        >
+          Can&apos;t find it? Add it manually with a price you know
+        </button>
+      ) : (
+        <div className="mt-2 flex items-end gap-2 border-t border-amber-200 pt-2">
+          <div className="flex-1">
+            <label className="block text-xs text-neutral-600">Product name</label>
+            <input
+              value={manualName}
+              onChange={(e) => setManualName(e.target.value)}
+              className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-neutral-600">Price</label>
+            <input
+              value={manualPrice}
+              onChange={(e) => setManualPrice(e.target.value)}
+              placeholder="0.00"
+              className="w-20 rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={addManualProduct}
+            disabled={saving}
+            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          >
+            Add
           </button>
         </div>
       )}
